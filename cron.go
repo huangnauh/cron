@@ -106,10 +106,11 @@ func (c *Cron) AddJob(spec string, cmd Job) error {
 // Schedule adds a Job to the Cron to be run on the given schedule.
 func (c *Cron) Schedule(schedule Schedule, cmd Job) {
 	entryID := cmd.ID()
+	c.logf("cron: add job begin: %s", entryID)
 
 	for _, e := range c.entries {
 		if e.ID == entryID {
-			return nil
+			return
 		}
 	}
 
@@ -144,6 +145,7 @@ func (c *Cron) Entry(id string) Entry {
 }
 
 func (c *Cron) Remove(id string) {
+	c.logf("cron: remove job begin: %s", id)
 	if c.running {
 		c.remove <- id
 	} else {
@@ -152,6 +154,7 @@ func (c *Cron) Remove(id string) {
 }
 
 func (c *Cron) removeEntry(id string) {
+	c.logf("cron: remove job start: %s", id)
 	var entries []*Entry
 	for _, e := range c.entries {
 		if e.ID != id {
@@ -235,6 +238,7 @@ func (c *Cron) run() {
 			case newEntry := <-c.add:
 				timer.Stop()
 				now = c.now()
+				c.logf("cron: add job start: %s", newEntry.ID)
 				newEntry.Next = newEntry.Schedule.Next(now)
 				c.entries = append(c.entries, newEntry)
 
@@ -242,7 +246,7 @@ func (c *Cron) run() {
 				c.snapshot <- c.entrySnapshot()
 				continue
 
-			case id := <- c.remove:
+			case id := <-c.remove:
 				timer.Stop()
 				now = c.now()
 				c.removeEntry(id)
