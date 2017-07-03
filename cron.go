@@ -95,7 +95,7 @@ func NewWithLocation(location *time.Location) *Cron {
 
 // AddJob adds a Job to the Cron to be run on the given schedule.
 func (c *Cron) AddJob(spec string, cmd Job) error {
-	schedule, err := Parse(spec)
+	schedule, err := ParseStandard(spec)
 	if err != nil {
 		return err
 	}
